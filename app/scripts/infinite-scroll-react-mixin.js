@@ -8,35 +8,35 @@
  * Note: implementation class must implement function "fetchNextPage(pageNumber:number)"
  */
 var InfiniteScrollReactMixin = {
-    getDefaultProps: function() {
+    getDefaultProps: function () {
         return {
             initialPage: 1,
             offset: 250
         };
     },
 
-    componentWillMount: function() {
+    componentWillMount: function () {
         //Forcing the browser to the top to prevent triggering extra fetches
-        window.scrollTo(0,0);
+        window.scrollTo(0, 0);
         this.nextPage = this.props.initialPage;
     },
 
-    componentWillUnmount: function() {
+    componentWillUnmount: function () {
         this.detachInfiniteScrollListener();
     },
 
-    componentDidMount: function() {
+    componentDidMount: function () {
         this.attachInfiniteScrollListener();
     },
 
-    componentDidUpdate: function() {
+    componentDidUpdate: function () {
         this.attachInfiniteScrollListener();
     },
 
-    getElementTopPosition: function(element){
+    getElementTopPosition: function (element) {
         if (element) {
             return element.offsetTop + this.getElementTopPosition(element.offsetParent);
-        }else{
+        } else {
             return 0;
         }
     },
@@ -44,9 +44,9 @@ var InfiniteScrollReactMixin = {
     infiniteScrollListener: function () {
         var element = this.getDOMNode();
         var scrollTop;
-        if(window.pageYOffset){
+        if (window.pageYOffset) {
             scrollTop = window.pageYOffset;
-        }else{
+        } else {
             scrollTop = (document.documentElement || document.body.parentNode || document.body).scrollTop;
         }
 
@@ -60,15 +60,30 @@ var InfiniteScrollReactMixin = {
         }
     },
 
+    debounce: function (func, wait, immediate) {
+        var timeout;
+        return function () {
+            var context = this, args = arguments;
+            var later = function () {
+                timeout = null;
+                if (!immediate) func.apply(context, args);
+            };
+            var callNow = immediate && !timeout;
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+            if (callNow) func.apply(context, args);
+        };
+    },
+
     attachInfiniteScrollListener: function () {
-        window.addEventListener('scroll', this.infiniteScrollListener);
-        window.addEventListener('resize', this.infiniteScrollListener);
+        window.addEventListener('scroll', this.debounce(this.infiniteScrollListener, 250));
+        window.addEventListener('resize', this.debounce(this.infiniteScrollListener, 250));
         this.infiniteScrollListener();
     },
 
     detachInfiniteScrollListener: function () {
-        window.removeEventListener('scroll', this.infiniteScrollListener);
-        window.removeEventListener('resize', this.infiniteScrollListener);
+        window.removeEventListener('scroll', this.debounce(this.infiniteScrollListener, 250));
+        window.removeEventListener('resize', this.debounce(this.infiniteScrollListener, 250));
     }
 };
 
